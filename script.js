@@ -12,33 +12,8 @@ const sidebar = L.control.sidebar({
 
 const devices = ['karouli1'];
 const markers = {};
-const deviceNames = {}; // αποθηκεύει προσωρινά τα ονόματα που δίνει ο χρήστης
+const deviceNames = {}; // προσωρινά ονόματα χρηστών
 
-<<<<<<< HEAD
-devices.forEach(deviceId => {
-  fetch(`https://arduino-backend-tbdm.onrender.com/get?device=${deviceId}`)
-    .then(response => response.json())
-    .then(data => {
-      console.log("📡 Λήφθηκαν δεδομένα για karouli1:", data);
-      if (data.lat && data.lng) {
-        const marker = L.marker([data.lat, data.lng]).addTo(map);
-        marker.on('click', () => {
-          document.getElementById('device-info').innerHTML = `
-            <p><strong>Συσκευή:</strong> ${deviceId}</p>
-            <p><strong>Κατάσταση:</strong> ${data.state}</p>
-            <p><strong>Συντεταγμένες:</strong> ${data.lat}, ${data.lng}</p>
-            <p><strong>Δορυφόροι:</strong> ${data.sats}</p>
-            <p><strong>Τελευταία ενημέρωση:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
-            <button onclick="refreshDevice('${deviceId}')">Ανανέωση</button>
-            <button onclick="toggleState('${deviceId}', '${data.state}')">${data.state === 'ON' ? 'Απενεργοποίηση' : 'Ενεργοποίηση'}</button>
-          `;
-          sidebar.open('info');
-        });
-      }
-    })
-    .catch(error => console.error('Σφάλμα κατά την ανάκτηση δεδομένων:', error));
-});
-=======
 function createMarker(deviceId, data) {
   const icon = L.icon({
     iconUrl: data.state === 'ON'
@@ -77,10 +52,9 @@ function renameDevice(deviceId) {
   const newName = document.getElementById('rename-input').value.trim();
   if (newName.length > 0) {
     deviceNames[deviceId] = newName;
-    refreshDevice(deviceId); // ανανεώνει το popup marker
+    refreshDevice(deviceId); // Ανανεώνει marker & sidebar
   }
 }
->>>>>>> a9d2ae0 (Βελτιώσεις στο UI αλλαγή χρώματος marker & μετονομασία)
 
 function refreshDevice(deviceId) {
   fetch(`https://arduino-backend-tbdm.onrender.com/get?device=${deviceId}`)
@@ -129,5 +103,5 @@ function toggleState(deviceId) {
     .catch(err => console.error('Σφάλμα αλλαγής κατάστασης:', err));
 }
 
-// Αρχική φόρτωση
+// 🚀 Αρχική φόρτωση όλων των συσκευών
 devices.forEach(deviceId => refreshDevice(deviceId));
