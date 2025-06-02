@@ -16,6 +16,7 @@ devices.forEach(deviceId => {
   fetch(`https://arduino-backend-tbdm.onrender.com/get?device=${deviceId}`)
     .then(response => response.json())
     .then(data => {
+      console.log("📡 Λήφθηκαν δεδομένα για karouli1:", data);
       if (data.lat && data.lng) {
         const marker = L.marker([data.lat, data.lng]).addTo(map);
         marker.on('click', () => {
