@@ -2,31 +2,49 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Καρούλια Tracker</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Σύστημα Εποπτείας Καρουλιών</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-sidebar-v2/css/leaflet-sidebar.min.css" />
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .leaflet-sidebar {
+        width: 100% !important;
+      }
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+      z-index: 9999;
+    }
+  </style>
 </head>
 <body>
   <div id="map"></div>
+
   <div id="sidebar" class="leaflet-sidebar collapsed">
-    <div class="leaflet-sidebar-tabs">
-      <ul role="tablist">
-        <li><a href="#info" role="tab"><i class="fa fa-info"></i></a></li>
-      </ul>
-    </div>
     <div class="leaflet-sidebar-content">
-      <div class="leaflet-sidebar-pane" id="info">
-        <h1 class="leaflet-sidebar-header">Πληροφορίες Καρουλιού<span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
-        <div id="device-info">
-          <p>Επιλέξτε ένα καρούλι στον χάρτη για να δείτε πληροφορίες.</p>
-        </div>
-      </div>
+      <h2>Πληροφορίες Συσκευής</h2>
+      <div id="device-info">Κάνε κλικ σε μία συσκευή</div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <div id="toast"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
   <script src="script.js"></script>
 </body>

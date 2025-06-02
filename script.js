@@ -10,10 +10,16 @@ const sidebar = L.control.sidebar({
   position: 'right'
 }).addTo(map);
 
-const devices = ['karouli1', 'karouli2', 'karouli3'];
+const devices = ['karouli1'];
 const markers = {};
 const deviceNames = {};
-let activeSidebarDevice = null;
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.style.display = 'block';
+  setTimeout(() => (toast.style.display = 'none'), 3000);
+}
 
 function createMarker(deviceId, data) {
   const icon = L.icon({
@@ -26,17 +32,15 @@ function createMarker(deviceId, data) {
 
   const marker = L.marker([data.lat, data.lng], { icon }).addTo(map);
   marker.bindPopup(deviceNames[deviceId] || deviceId);
-  marker.on('click', () => {
-    activeSidebarDevice = deviceId;
-    openSidebar(deviceId, data);
-  });
+  marker.on('click', () => openSidebar(deviceId, data));
   markers[deviceId] = marker;
 }
 
 function openSidebar(deviceId, data) {
   const name = deviceNames[deviceId] || deviceId;
+  const timeDiff = (Date.now() - new Date(data.timestamp).getTime()) / 1000;
 
-  let html = `
+  let info = `
     <p><strong>Όνομα:</strong> <span id="display-name">${name}</span></p>
     <input id="rename-input" type="text" placeholder="Νέο όνομα" style="width: 90%" />
     <button onclick="renameDevice('${deviceId}')">Μετονομασία</button>
@@ -48,15 +52,17 @@ function openSidebar(deviceId, data) {
   `;
 
   if (data.state === 'OFF') {
-    html += `<p style="color: red;"><em>Η συσκευή είναι ανενεργή.</em></p>`;
+    info += `<p style="color: red;"><em>Η συσκευή είναι ανενεργή.</em></p>`;
+  } else if (timeDiff > 60) {
+    info += `<p style="color: orange;"><em>⚠️ Δεν έχει απαντήσει εδώ και ${Math.round(timeDiff)} δευτερόλεπτα.</em></p>`;
   }
 
-  html += `
-    <button onclick="refreshDevice('${deviceId}')" ${data.state === 'OFF' ? 'disabled' : ''}>Ανανέωση</button>
-    <button onclick="toggleState('${deviceId}')">${data.state === 'ON' ? 'Απενεργοποίηση' : 'Ενεργοποίηση'}</button>
+  info += `
+    <button onclick="refreshDevice('${deviceId}')">Ανανέωση</button>
+    <button onclick="toggleState('${deviceId}')">Αλλαγή κατάστασης</button>
   `;
 
-  document.getElementById('device-info').innerHTML = html;
+  document.getElementById('device-info').innerHTML = info;
   sidebar.open('info');
 }
 
@@ -65,6 +71,7 @@ function renameDevice(deviceId) {
   if (newName.length > 0) {
     deviceNames[deviceId] = newName;
     refreshDevice(deviceId);
+    showToast('Το όνομα ενημερώθηκε.');
   }
 }
 
@@ -88,11 +95,12 @@ function refreshDevice(deviceId) {
         markers[deviceId].setPopupContent(deviceNames[deviceId] || deviceId);
       }
 
-      if (activeSidebarDevice === deviceId) {
-        openSidebar(deviceId, data);
-      }
+      openSidebar(deviceId, data);
     })
-    .catch(err => console.error(`❌ Σφάλμα στη συσκευή ${deviceId}:`, err));
+    .catch(err => {
+      showToast('Αποτυχία ανανέωσης δεδομένων!');
+      console.error('Σφάλμα ανανέωσης:', err);
+    });
 }
 
 function toggleState(deviceId) {
@@ -113,22 +121,15 @@ function toggleState(deviceId) {
         })
       });
     })
-    .then(() => refreshDevice(deviceId))
-    .catch(err => console.error('Σφάλμα αλλαγής κατάστασης:', err));
+    .then(() => {
+      refreshDevice(deviceId);
+      showToast('Η κατάσταση της συσκευής άλλαξε.');
+    })
+    .catch(err => {
+      showToast('Σφάλμα κατά την αλλαγή κατάστασης.');
+      console.error('Σφάλμα toggle:', err);
+    });
 }
 
-// ✅ Αρχική φόρτωση
+// Αρχική φόρτωση
 devices.forEach(deviceId => refreshDevice(deviceId));
-
-// 🔁 Αυτόματη ανανέωση κάθε 30s μόνο για ενεργές συσκευές
-setInterval(() => {
-  devices.forEach(deviceId => {
-    fetch(`https://arduino-backend-tbdm.onrender.com/get?device=${deviceId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.state === 'ON') {
-          refreshDevice(deviceId);
-        }
-      });
-  });
-}, 30000);
