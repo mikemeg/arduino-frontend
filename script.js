@@ -12,7 +12,7 @@ const sidebar = L.control.sidebar({
 
 const devices = ['karouli1'];
 const markers = {};
-const deviceNames = {}; // προσωρινά ονόματα χρηστών
+const deviceNames = {};
 
 function createMarker(deviceId, data) {
   const icon = L.icon({
@@ -32,7 +32,7 @@ function createMarker(deviceId, data) {
 function openSidebar(deviceId, data) {
   const name = deviceNames[deviceId] || deviceId;
 
-  document.getElementById('device-info').innerHTML = `
+  let html = `
     <p><strong>Όνομα:</strong> <span id="display-name">${name}</span></p>
     <input id="rename-input" type="text" placeholder="Νέο όνομα" style="width: 90%" />
     <button onclick="renameDevice('${deviceId}')">Μετονομασία</button>
@@ -41,10 +41,18 @@ function openSidebar(deviceId, data) {
     <p><strong>Συντεταγμένες:</strong> ${data.lat}, ${data.lng}</p>
     <p><strong>Δορυφόροι:</strong> ${data.sats}</p>
     <p><strong>Τελευταία ενημέρωση:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
-    <button onclick="refreshDevice('${deviceId}')">Ανανέωση</button>
-    <button onclick="toggleState('${deviceId}')">Αλλαγή κατάστασης</button>
   `;
 
+  if (data.state === 'OFF') {
+    html += `<p style="color: red;"><em>Η συσκευή είναι ανενεργή και δεν αποστέλλει δεδομένα.</em></p>`;
+  }
+
+  html += `
+    <button onclick="refreshDevice('${deviceId}')" ${data.state === 'OFF' ? 'disabled' : ''}>Ανανέωση</button>
+    <button onclick="toggleState('${deviceId}')">${data.state === 'ON' ? 'Απενεργοποίηση' : 'Ενεργοποίηση'}</button>
+  `;
+
+  document.getElementById('device-info').innerHTML = html;
   sidebar.open('info');
 }
 
@@ -52,7 +60,7 @@ function renameDevice(deviceId) {
   const newName = document.getElementById('rename-input').value.trim();
   if (newName.length > 0) {
     deviceNames[deviceId] = newName;
-    refreshDevice(deviceId); // Ανανεώνει marker & sidebar
+    refreshDevice(deviceId);
   }
 }
 
@@ -103,5 +111,5 @@ function toggleState(deviceId) {
     .catch(err => console.error('Σφάλμα αλλαγής κατάστασης:', err));
 }
 
-// 🚀 Αρχική φόρτωση όλων των συσκευών
+// Αρχική φόρτωση
 devices.forEach(deviceId => refreshDevice(deviceId));
