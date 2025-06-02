@@ -10,9 +10,10 @@ const sidebar = L.control.sidebar({
   position: 'right'
 }).addTo(map);
 
-const devices = ['karouli1'];
+const devices = ['karouli1', 'karouli2', 'karouli3'];
 const markers = {};
 const deviceNames = {};
+let activeSidebarDevice = null;
 
 function createMarker(deviceId, data) {
   const icon = L.icon({
@@ -25,7 +26,10 @@ function createMarker(deviceId, data) {
 
   const marker = L.marker([data.lat, data.lng], { icon }).addTo(map);
   marker.bindPopup(deviceNames[deviceId] || deviceId);
-  marker.on('click', () => openSidebar(deviceId, data));
+  marker.on('click', () => {
+    activeSidebarDevice = deviceId;
+    openSidebar(deviceId, data);
+  });
   markers[deviceId] = marker;
 }
 
@@ -44,7 +48,7 @@ function openSidebar(deviceId, data) {
   `;
 
   if (data.state === 'OFF') {
-    html += `<p style="color: red;"><em>Η συσκευή είναι ανενεργή και δεν αποστέλλει δεδομένα.</em></p>`;
+    html += `<p style="color: red;"><em>Η συσκευή είναι ανενεργή.</em></p>`;
   }
 
   html += `
@@ -84,9 +88,11 @@ function refreshDevice(deviceId) {
         markers[deviceId].setPopupContent(deviceNames[deviceId] || deviceId);
       }
 
-      openSidebar(deviceId, data);
+      if (activeSidebarDevice === deviceId) {
+        openSidebar(deviceId, data);
+      }
     })
-    .catch(err => console.error('Σφάλμα ανανέωσης:', err));
+    .catch(err => console.error(`❌ Σφάλμα στη συσκευή ${deviceId}:`, err));
 }
 
 function toggleState(deviceId) {
@@ -111,5 +117,18 @@ function toggleState(deviceId) {
     .catch(err => console.error('Σφάλμα αλλαγής κατάστασης:', err));
 }
 
-// Αρχική φόρτωση
+// ✅ Αρχική φόρτωση
 devices.forEach(deviceId => refreshDevice(deviceId));
+
+// 🔁 Αυτόματη ανανέωση κάθε 30s μόνο για ενεργές συσκευές
+setInterval(() => {
+  devices.forEach(deviceId => {
+    fetch(`https://arduino-backend-tbdm.onrender.com/get?device=${deviceId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.state === 'ON') {
+          refreshDevice(deviceId);
+        }
+      });
+  });
+}, 30000);
